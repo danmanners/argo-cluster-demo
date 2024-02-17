@@ -1,0 +1,77 @@
+kind: Job
+metadata:
+  name: bootstrap
+  namespace: kube-system
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: bootstrap
+        image: replace-image
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        # Cluster Provisioning Script
+        - name: cluster-provisioning
+          mountPath: /opt/cluster-provisioning
+        # ArgoCD Installation Script
+        - name: argocd
+          mountPath: /opt/argocd.sh
+          subPath: install.sh
+        # Cert-Manager Installation Script
+        - name: cert-manager
+          mountPath: /opt/cert-manager.sh
+          subPath: install.sh
+        # Cilium Installation Script
+        - name: cilium
+          mountPath: /opt/cilium.sh
+          subPath: install.sh
+        # CoreDNS Installation Script
+        - name: coredns
+          mountPath: /opt/coredns.sh
+          subPath: install.sh
+        # EBS CSI Driver Installation Script
+        # - name: ebs-csi-driver
+        #   mountPath: /opt/ebs-csi-driver.sh
+        #   subPath: install.sh
+        # External DNS Installation Script
+        - name: external-dns
+          mountPath: /opt/external-dns.sh
+          subPath: install.sh
+        # Ingress Nginx Installation Script
+        - name: ingress-nginx
+          mountPath: /opt/ingress-nginx.sh
+          subPath: install.sh
+        # Sealed Secrets Installation Script
+        - name: sealed-secrets
+          mountPath: /opt/sealed-secrets.sh
+          subPath: install.sh
+      volumes:
+      - name: cluster-provisioning
+        configMap:
+          name: cluster-provisioning
+      - name: argocd
+        configMap:
+          name: install-argocd
+      - name: cert-manager
+        configMap:
+          name: install-cert-manager
+      - name: cilium
+        configMap:
+          name: install-cilium
+      - name: coredns
+        configMap:
+          name: install-coredns
+      # - name: ebs-csi-driver
+      #   configMap:
+      #     name: install-ebs-csi-driver
+      - name: external-dns
+        configMap:
+          name: install-external-dns
+      - name: ingress-nginx
+        configMap:
+          name: install-ingress-nginx
+      - name: sealed-secrets
+        configMap:
+          name: install-sealed-secrets
