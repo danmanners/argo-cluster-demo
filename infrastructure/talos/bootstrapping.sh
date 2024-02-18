@@ -22,16 +22,16 @@ EOF
 git clone \
     --depth 1 \
     --branch feature/restructure \
-    https://github.com/danmanners/homelab-kube-cluster.git \
-    /tmp/homelab-kube-cluster
+    https://github.com/GITHUB_USERNAME/GITHUB_REPOSITORY_NAME.git \
+    /tmp/GITHUB_REPOSITORY_NAME
 
 # Change to the repo directory and Build the Talos Configs
-cd /tmp/homelab-kube-cluster/iac/cloud/talos
+cd /tmp/GITHUB_REPOSITORY_NAME/iac/cloud/talos
 sops -d -i talsecret.sops.yaml
 talhelper genconfig
 
 # Check if the cluster has already been deployed
-if $(talosctl --talosconfig clusterconfig/talosconfig -n ${CONTROL_PLANE_IP} kubeconfig /tmp/kubeconfig); then
+if $(talosctl --talosconfig clusterconfig/talosconfig -n 172.29.8.5 kubeconfig /tmp/kubeconfig); then
     DEPLOYED="True"
 else
     DEPLOYED="False"

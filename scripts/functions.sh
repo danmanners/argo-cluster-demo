@@ -7,20 +7,18 @@ function getGitRootPath() {
 
 # Function to parse through all of the user defined input
 function parseUserInput() {
-  user_inputs=("$@")
-  for user_input in "${user_inputs[@]}"; do
-    if [[ -z "${!user_input}" ]]; then
-      printf "\t> Please enter your $(echo ${user_input} | sed "s|_|\ |g"): "
-      read -r $user_input
-    fi
-  done
+  user_input=${1}
+  if [[ -z "${!user_input}" ]]; then
+    printf "\t> Please enter your $(echo ${user_input} | sed "s|_|\ |g"): "
+    read -r $user_input
+  fi
 }
 
 # Function to check all user defined input
 function checkUserInput() {
   user_inputs=("$@")
   for user_input in "${user_inputs[@]}"; do
-    echo -e "\t- $(echo ${user_input}|sed "s|_|\ |g"): ${!user_input}"
+    echo -e "\t- $(echo ${user_input} | sed "s|_|\ |g"): ${!user_input}"
   done
   printf "🔍 Do these look correct? (y/n) "
   read -r confirm
@@ -28,6 +26,26 @@ function checkUserInput() {
   if [[ $confirm != "y" ]]; then
     echo "😕 Please re-run the script with the correct environment variables."
     exit 1
+  fi
+}
+
+# Function to set github cli values
+function setGitHubCLIValues() {
+  # Check if GitHub CLI is already authenticated
+  if ! gh auth status >/dev/null 2>&1; then
+    # Set GitHub CLI to non-interactive mode
+    gh config set prompt disabled
+    # Set the github.com protocol to SSH
+    gh config set -h github.com git_protocol ssh
+    # Open the browser to authenticate with GitHub
+    open https://github.com/login/device
+    # Perform the github auth
+    gh auth login -w
+    # Re-enable the prompt
+    gh config set prompt enabled
+  else
+    echo -e "\t🎉 GitHub CLI is already authenticated."
+    return
   fi
 }
 
@@ -146,6 +164,15 @@ function encryptSealedSecretsKey() {
   fi
 }
 
+# Function to list all of the repository secrets
+function listGitHubRepoSecrets() {
+  github_username=$1
+  # Get the repository name
+  remote_repo="${github_username}/$(basename -s .git $(git config --get remote.origin.url))"
+  # List the secrets in the repository
+  gh secret list -R $remote_repo
+}
+
 # Function to define and create our repository secrets using the GitHub CLI
 function createGitHubRepoSecrets() {
   # Get the repository name
@@ -161,4 +188,14 @@ function createGitHubRepoSecrets() {
     # Check if the secret already exists
     if gh secret list -R $remote_repo | grep -q $secret; then
       echo -e "\t🎉 $secret"
+    fi
+  done
+}
+
+# Function to replace values files using sed
+function replaceValuesFiles() {
+  original_value=${1}
+  new_value=${2}
+  list_of_files=${3}
+  echo "List of Files: $list_of_files"
 }
