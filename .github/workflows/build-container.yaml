@@ -11,16 +11,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # Configures AWS credentials
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.REGION }}
       # Checkout the repository
       - name: Checkout
         uses: actions/checkout@v4.1.1
       # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.0.0
-      # Configures AWS credentials
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ secrets.REGION }}
       # Log in to the Amazon ECR registry
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2.0.1
@@ -28,10 +30,11 @@ jobs:
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v5
+        env:
+          TAG: ${{ github.workflow_sha || 'latest' }}
         with:
-          context: ./containers
-          file: Dockerfile
+          context: "{{defaultContext}}:containers"
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/bootstrapping:${tag:=latest}
-            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/bootstrapping:${tag:=latest}
+            ghcr.io/${{ github.repository }}/bootstrapping:${{ env.TAG}}
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/bootstrapping:${{ env.TAG }}
