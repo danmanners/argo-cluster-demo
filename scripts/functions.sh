@@ -166,17 +166,19 @@ function encryptSealedSecretsKey() {
 
 # Function to list all of the repository secrets
 function listGitHubRepoSecrets() {
-  github_username=$1
+  github_username=${1}
   # Get the repository name
   remote_repo="${github_username}/$(basename -s .git $(git config --get remote.origin.url))"
   # List the secrets in the repository
-  gh secret list -R $remote_repo
+  for item in $(gh secret list -R $remote_repo --json name | jq -rc '.[].name'); do
+    echo -e "\t- $item"
+  done
 }
 
 # Function to define and create our repository secrets using the GitHub CLI
 function createGitHubRepoSecrets() {
   # Get the repository name
-  remote_repo=$(basename -s .git $(git config --get remote.origin.url))
+  remote_repo="${1}/$(basename -s .git $(git config --get remote.origin.url))"
   # Provide the list of secrets that we want to create in the repository
   secrets=(
     "aws_access_key_id"
@@ -186,9 +188,9 @@ function createGitHubRepoSecrets() {
   # Loop through the secrets and create them in the repository
   for secret in "${secrets[@]}"; do
     # Check if the secret already exists
-    if gh secret list -R $remote_repo | grep -q $secret; then
-      echo -e "\t🎉 $secret"
-    fi
+    upperSecret=$(echo ${secret} | tr '[:lower:]' '[:upper:]')
+    upperSecretValue=$(aws configure get default.${secret})
+    echo -e "\t✨ Creating the ${upperSecret} secret..."
   done
 }
 

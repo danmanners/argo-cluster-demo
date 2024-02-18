@@ -76,4 +76,7 @@ createSopsConfig
 echo "🔐 Encrypting the Sealed Secrets Key..."
 encryptSealedSecretsKey
 
-replaceValuesFiles original_value new_value infrastructure/talos/bootstrapping.sh infrastructure/pulumi/
+# Get the current list of repository secrets
+echo "🔑 Listing the current repository secrets..."
+# listGitHubRepoSecrets $GitHub_Username
+createGitHubRepoSecrets $GitHub_Username
