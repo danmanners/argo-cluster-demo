@@ -26,6 +26,14 @@ jobs:
       # Log in to the Amazon ECR registry
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2.0.1
+      # Log in to the GitHub Container Registry
+      - name: "Login to GitHub Container Registry"
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       # Build and push the container
       - name: Build and push
         id: docker_build
@@ -36,5 +44,5 @@ jobs:
           context: "{{defaultContext}}:containers"
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/bootstrapping:${{ env.TAG}}
+            ghcr.io/${{ github.repository }}/bootstrapping:${{ env.TAG }}
             ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/bootstrapping:${{ env.TAG }}
