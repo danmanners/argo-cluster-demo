@@ -78,5 +78,8 @@ encryptSealedSecretsKey
 
 # Get the current list of repository secrets
 echo "🔏 Writing all repository secrets..."
-# listGitHubRepoSecrets $GitHub_Username
 createGitHubRepoSecrets $GitHub_Username
+
+# Create the ECR Repository
+echo "📦 Creating the ECR Repository..."
+createECRRegistry

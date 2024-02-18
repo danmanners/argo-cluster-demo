@@ -28,21 +28,28 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2.0.1
       # Log in to the GitHub Container Registry
       - name: "Login to GitHub Container Registry"
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Get the repository name
+      - name: Get Repository Name
+        run: |
+          GHR=$(echo "${{ github.repository }}" | awk -F '/' '{print $2}')
+          echo "GITHUB_REPO=${GHR}" >> $GITHUB_ENV
 
       # Build and push the container
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v5
         env:
-          TAG: ${{ github.workflow_sha || 'latest' }}
+          TAG: "latest"
+          GITHUB_REPO: ${{ env.GITHUB_REPO }}
         with:
           context: "{{defaultContext}}:containers"
           push: true
           tags: |
             ghcr.io/${{ github.repository }}/bootstrapping:${{ env.TAG }}
-            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/bootstrapping:${{ env.TAG }}
+            ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.REGION }}.amazonaws.com/${{ env.GITHUB_REPO }}:${{ env.TAG }}

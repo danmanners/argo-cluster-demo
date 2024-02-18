@@ -190,13 +190,43 @@ function createGitHubRepoSecrets() {
   for secret in "${secrets[@]}"; do
     # Check if the secret already exists
     upperSecret=$(echo ${secret} | tr '[:lower:]' '[:upper:]')
-    echo -e "\t✨ Creating the ${upperSecret} secret..."
+    printf "\t✨ Creating the ${upperSecret} secret..."
     if [[ "${!secret}" ]]; then
-      gh secret set ${upperSecret} -R $remote_repo -b "${!secret}"
+      gh secret set ${upperSecret} -R $remote_repo -b "${!secret}" >/dev/null 2>&1
     else
-      gh secret set ${upperSecret} -R $remote_repo -b "$(aws configure get default.${secret})"
+      gh secret set ${upperSecret} -R $remote_repo -b "$(aws configure get default.${secret})" >/dev/null 2>&1
+    fi
+    # Check if the secret was created successfully
+    if [[ $? -eq 0 ]]; then
+      echo -e "🎉 secret created."
+    else
+      echo -e "❌ secret failed to create."
     fi
   done
+}
+
+# Function to create the appropriate ECR registry
+function createECRRegistry() {
+  # Reusable function inside of this function
+  function chk() {
+    # If the repository exists, return 0, else return 1
+    if [[ $(aws ecr describe-repositories | jq -r '.repositories[].repositoryName' | xargs) =~ "${1}" ]]; then
+      # if "${1}" in $(aws ecr describe-repositories | jq -r '.repositories[].repositoryName' | xargs); then
+      return 0
+    else
+      return 1
+    fi
+  }
+  # Get the repository name
+  repository_name=$(basename -s .git $(git config --get remote.origin.url))
+  # Check if the ECR registry already exists
+  if chk "${repository_name}"; then
+    echo -e "\t🎉 ECR Registry already exists."
+  else
+    echo -e "\t🔧 Creating the ECR Registry..."
+    aws ecr create-repository --region=$(aws configure get default.region) --repository-name=${repository_name} >/dev/null 2>&1
+    echo -e "\t🎉 ECR Registry created."
+  fi
 }
 
 # Function to replace values files using sed
