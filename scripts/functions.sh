@@ -181,6 +181,7 @@ function createGitHubRepoSecrets() {
   remote_repo="${1}/$(basename -s .git $(git config --get remote.origin.url))"
   # Provide the list of secrets that we want to create in the repository
   secrets=(
+    "AWS_Account_ID"
     "aws_access_key_id"
     "aws_secret_access_key"
     "region"
@@ -189,8 +190,12 @@ function createGitHubRepoSecrets() {
   for secret in "${secrets[@]}"; do
     # Check if the secret already exists
     upperSecret=$(echo ${secret} | tr '[:lower:]' '[:upper:]')
-    upperSecretValue=$(aws configure get default.${secret})
     echo -e "\t✨ Creating the ${upperSecret} secret..."
+    if [[ "${!secret}" ]]; then
+      gh secret set ${upperSecret} -R $remote_repo -b "${!secret}"
+    else
+      gh secret set ${upperSecret} -R $remote_repo -b "$(aws configure get default.${secret})"
+    fi
   done
 }
 

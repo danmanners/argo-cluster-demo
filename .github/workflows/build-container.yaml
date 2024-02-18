@@ -20,7 +20,7 @@ jobs:
       # Configures AWS credentials
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ secrets.REGION }}
       # Log in to the Amazon ECR registry
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2.0.1
