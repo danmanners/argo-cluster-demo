@@ -11,7 +11,7 @@
       ],
     },
     {
-      customType: "regex",
+      customType: "helmv3",
       fileMatch: ["env.sh"],
       matchStrings: [
         'datasource=(?<datasource>\\S+)\n*[^"]+"(?<registryUrl>[^"]+)"\n*[^"]+"(?<depName>[^"]+)"\n*[^"]+"(?<currentValue>[^"]+)',
