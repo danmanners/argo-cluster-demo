@@ -116,6 +116,10 @@ createGitHubRepoSecrets $GitHub_Username
 echo "📦 Creating the ECR Repository..."
 createECRRegistry
 
+# Upload the AGE Key to AWS Secrets Manager
+echo "🔑 Checking on the AGE Key in AWS Secrets Manager..."
+uploadAWSSecretsManagerSecret
+
 # Replace the placeholder values in the Pulumi values.ts file
 echo "🔧 Replacing the placeholder values in the Pulumi values.ts file..."
 replacePulumiValues \

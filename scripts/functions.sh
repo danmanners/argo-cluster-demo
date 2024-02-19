@@ -288,6 +288,70 @@ function route53Error() {
   echo -e "\t❌ The Route53 Hosted Zone ID for \"${1}\" cannot be found."
 }
 
+# Function to check if a secret is already in AWS Secrets Manager
+function checkAWSSecretsManagerSecret() {
+  # Check if the secret exists
+  if [[ $(aws secretsmanager list-secrets | jq -r '.SecretList[].Name' | xargs) =~ "${1}" ]]; then
+    echo -e "\t🎉 AGE key is already in AWS Secrets Store."
+  else
+    echo -e "\t🔑 Secret not found, creating."
+    return 0
+  fi
+}
+
+# Function to create the appropriate AWS Secrets Manager secret
+function createAWSSecretsManagerSecret() {
+  # Set the Description Field
+  description="Cloud AGE Key for Talos to decrypt SealedSecrets Key"
+
+  # Create the secret in AWS Secrets Manager
+  secret=$(aws secretsmanager create-secret --name ${1} \
+    --secret-string "$(cat $(getGitRootPath)/keys/age.key | grep AGE-SECRET-KEY)" \
+    --description "${description}" \
+    --tags Key=Repo,Value="${2}" |
+    jq -r '.ARN')
+
+  # Check if the secret was created successfully
+  if [[ "${secret}" != "null" ]]; then
+    echo -e "🎉 AGE key created in AWS Secrets Store."
+  else
+    echo -e "❌ AGE key failed to create in AWS Secrets Store."
+  fi
+}
+
+# Function to update the appropriate AWS Secrets Manager secret
+function updateAWSSecretsManagerSecret() {
+  # Update the secret in AWS Secrets Manager
+  secret=$(aws secretsmanager update-secret --secret-id ${1} \
+    --secret-string "$(cat $(getGitRootPath)/keys/age.key | grep AGE-SECRET-KEY)" |
+    jq -r '.ARN')
+
+  # Check if the secret was updated successfully
+  if [[ "${secret}" != "null" ]]; then
+    echo "🎉 AGE key updated in AWS Secrets Store."
+  else
+    echo "❌ AGE key failed to update in AWS Secrets Store."
+  fi
+}
+
+# Function to evaluate and upload the appropriate AWS Secrets Manager secret
+function uploadAWSSecretsManagerSecret() {
+  # Define the name of the secret
+  secret_name="cloud-age-key"
+  # Check if the secret already exists
+  checkSecret=$(checkAWSSecretsManagerSecret ${secret_name})
+  if [[ $checkSecret == "" ]]; then
+    printf "\t🔑 Secret not found; creating..."
+    # Get the repository name
+    remote_repo="${1}/$(basename -s .git $(git config --get remote.origin.url))"
+    createAWSSecretsManagerSecret "${secret_name}" "https://github.com/${remote_repo}"
+  else
+    printf "\t❓ Secret exists. Updating for integrity..."
+    # Update the secret
+    updateAWSSecretsManagerSecret "${secret_name}"
+  fi
+}
+
 # Function to replace the placeholder values in the pulumi values file
 function replacePulumiValues() {
   # Set all of the variables to be used in the pulumi values file
