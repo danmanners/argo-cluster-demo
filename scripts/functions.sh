@@ -29,7 +29,7 @@ function checkUserInput() {
   fi
 }
 
-# Function to set github cli values
+# Function to set github cli values and log the user in
 function setGitHubCLIValues() {
   # Check if GitHub CLI is already authenticated
   if ! gh auth status >/dev/null 2>&1; then
@@ -273,10 +273,36 @@ function createRoute53HostedZone() {
   # Create the NS records in the parent domain
   aws route53 change-resource-record-sets \
     --hosted-zone-id ${parent_hosted_zone_id} \
-    --change-batch ${post_data} | jq -r
+    --change-batch ${post_data} >/dev/null 2>&1
+
+  # Check if the hosted zone was created successfully
+  if [[ $? -eq 0 ]]; then
+    echo -e "\t🎉 Route53 Hosted Zone created."
+  else
+    echo -e "\t❌ Route53 Hosted Zone failed to create."
+  fi
 }
 
 # Function to return errors for the Route53 HostedZone ID Lookup
 function route53Error() {
   echo -e "\t❌ The Route53 Hosted Zone ID for \"${1}\" cannot be found."
+}
+
+# Function to replace the placeholder values in the pulumi values file
+function replacePulumiValues() {
+  # Set all of the variables to be used in the pulumi values file
+  domain="${1}"
+  github_username="${2}"
+  public_hosted_zone_id="${3}"
+  aws_account_id="${4}"
+  repository_name="$(basename -s .git $(git config --get remote.origin.url))"
+
+  # Get the pulumi values file
+  pulumi_values_file="$(getGitRootPath)/infrastructure/pulumi/env/values.ts"
+  # Replace the placeholder values in the pulumi values file
+  sed -i '' -e "s|your_domain_here|${domain}|" ${pulumi_values_file}
+  sed -i '' -e "s|your_github_username|${github_username}|" ${pulumi_values_file}
+  sed -i '' -e "s|your_github_repo_name|${repository_name}|" ${pulumi_values_file}
+  sed -i '' -e "s|your_hosted_zone_id|${public_hosted_zone_id}|" ${pulumi_values_file}
+  sed -i '' -e "s|your_aws_account_id|${aws_account_id}|" ${pulumi_values_file}
 }

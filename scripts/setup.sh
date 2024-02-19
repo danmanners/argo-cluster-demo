@@ -1,10 +1,5 @@
 #!/bin/bash
 set -e
-## MacOS Provisioning Script
-# This script is used to setup a new MacOS environment for development.
-# We'll make sure that all of the required tools and resources are
-# available on your local machine and ready to go.
-
 # Load all of the core functions from the same directory of the environment-setup script
 source $(dirname ${0})/functions.sh
 
@@ -82,7 +77,8 @@ if [[ $numCheck -gt 2 ]]; then
 fi
 
 # Attempt to get the Route53 Hosted Zone ID for the Cloud_Domain_Name
-if [[ -z $(getRoute53HostedZoneIDLookup ${Cloud_Domain_Name}) ]]; then
+domain_hosted_zone_id=$(getRoute53HostedZoneIDLookup ${Cloud_Domain_Name})
+if [[ -z ${domain_hosted_zone_id} ]]; then
   route53Error ${Cloud_Domain_Name}
   printf "\t❓ Do you want to create the Route53 Hosted Zone for ${Cloud_Domain_Name}? (y/n) "
   read -r create_hosted_zone
@@ -119,3 +115,17 @@ createGitHubRepoSecrets $GitHub_Username
 # Create the ECR Repository
 echo "📦 Creating the ECR Repository..."
 createECRRegistry
+
+# Replace the placeholder values in the Pulumi values.ts file
+echo "🔧 Replacing the placeholder values in the Pulumi values.ts file..."
+replacePulumiValues \
+  ${Cloud_Domain_Name} \
+  ${GitHub_Username} \
+  ${domain_hosted_zone_id} \
+  ${AWS_Account_ID}
+if [[ $? -ne 0 ]]; then
+  echo -e "\t❌ Failed to replace the placeholder values in the Pulumi values.ts file."
+  exit 1
+else
+  echo -e "\t🎉 Replaced the placeholder values in the Pulumi values.ts file."
+fi
