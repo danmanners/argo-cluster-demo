@@ -1,14 +1,21 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
-  "dependencyDashboard": true,
-  "regexManagers": [
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["config:base"],
+  dependencyDashboard: true,
+  customManagers: [
     {
-      "fileMatch": ["kustomization.ya??ml$"],
-      "matchStrings": [
-        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\n*[^\/]+:\/\/[^\/]+\/[^\/]+\/[^\/]+\/(?<currentValue>[^\/]+)\/"
+      customType: "regex",
+      fileMatch: ["kustomization.ya??ml$"],
+      matchStrings: [
+        "datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\n*[^/]+://[^/]+/[^/]+/[^/]+/(?<currentValue>[^/]+)/",
       ],
-      "datasourceTemplate": "github-releases"
-    }
-  ]
+    },
+    {
+      customType: "regex",
+      fileMatch: ["env.sh"],
+      matchStrings: [
+        'datasource=(?<datasource>\\S+)\n*[^"]+"(?<registryUrl>[^"]+)"\n*[^"]+"(?<depName>[^"]+)"\n*[^"]+"(?<currentValue>[^"]+)',
+      ],
+    },
+  ],
 }

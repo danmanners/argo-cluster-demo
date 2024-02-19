@@ -306,3 +306,51 @@ function replacePulumiValues() {
   sed -i '' -e "s|your_hosted_zone_id|${public_hosted_zone_id}|" ${pulumi_values_file}
   sed -i '' -e "s|your_aws_account_id|${aws_account_id}|" ${pulumi_values_file}
 }
+
+# Function to deploy a helm chart
+function deployHelmChart() {
+  # Set the variables
+  APP_DIRECTORY=${1}
+  HELM_REPO_SOURCE=${2}
+  HELM_REPO_NAME=${3}
+  HELM_APP_NAME=${4}
+  HELM_APP_VERSION=${5}
+  HELM_APP_NAMESPACE=${6}
+  DRY_RUN=${7:-"none"}
+
+  # Add the Helm repository
+  helm repo add ${HELM_REPO_NAME} ${HELM_REPO_SOURCE}
+
+  # Update your local Helm chart repository cache
+  helm repo update
+
+  # Template out and install the Helm chart via pipe to `kubectl apply`
+  echo "helm template ${HELM_APP_NAME} ${HELM_REPO_NAME}/${HELM_APP_NAME} --version ${HELM_APP_VERSION} --values ${APP_DIRECTORY}/values.yaml -n ${HELM_APP_NAMESPACE} | kubectl apply -f - --dry-run=${DRY_RUN}"
+  helm template ${HELM_APP_NAME} ${HELM_REPO_NAME}/${HELM_APP_NAME} \
+    --version ${HELM_APP_VERSION} \
+    --values ${APP_DIRECTORY}/values.yaml \
+    -n ${HELM_APP_NAMESPACE} |
+    kubectl apply -f - --dry-run=${DRY_RUN}
+}
+
+# Function to check and set for a default value with Kubectl dry-runs
+function checkKubectlDryRun() {
+  # Check if dry-run flag is set
+  if [ "$1" == "--dry-run" ]; then
+    echo "client"
+  else
+    echo "none"
+  fi
+}
+
+# Function to evaluate if a directory path exists, then source the env.sh file if it does
+function sourceEnvFile() {
+  # Check if the first argument is a valid directory path
+  if [ -d "${1}" ]; then
+    export $(cat ${1}/env.sh | grep -v '#' | xargs)
+    return 0
+  else
+    echo "Invalid directory path"
+    exit 1
+  fi
+}
