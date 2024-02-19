@@ -2,11 +2,10 @@ import { Node } from "../types/types";
 
 // General Values
 export const general = {
-  domain: "your_domain_here", // Replace this with your own public domain
-  github_username: "github_username", // Replace this with your own GitHub Username
-  repo_name: "github_repo_name", // Replace this with your own GitHub Repo Name
-  public_hosted_zone: "your_hosted_zone_id", // Replace this with your own Route53 Hosted Zone ID
-  bucket_name: "oidc_bucket_name", // Replace this with your own S3 Bucket Name
+  domain: "your_domain_here.com", // Replace this with your own public domain
+  github_username: "YourUsernameHere", // Replace this with your own GitHub Username
+  public_hosted_zone: "Z016942938TFLEH1J2FS1", // Replace this with your own Route53 Hosted Zone ID
+  bucket_name: "cloud-homelab-oidc-auth", // Replace this with your own S3 Bucket Name
   domain_comment: "Internal DNS HostedZone for the cloud cluster",
 };
 
@@ -14,8 +13,8 @@ export const general = {
 export const tags = {
   environment: "homelab",
   project_name: "cloud-homelab",
-  repo_name: "${general.repo_name}",
-  github_url: `https://github.com/${general.github_username}/${general.repo_name}`,
+  repo_name: "homelab-kube-cluster",
+  github_url: `https://github.com/${general.github_username}/homelab-kube-cluster`,
 };
 
 // Cloud Setup Values

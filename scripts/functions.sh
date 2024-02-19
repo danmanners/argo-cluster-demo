@@ -229,10 +229,54 @@ function createECRRegistry() {
   fi
 }
 
-# Function to replace values files using sed
-function replaceValuesFiles() {
-  original_value=${1}
-  new_value=${2}
-  list_of_files=${3}
-  echo "List of Files: $list_of_files"
+# Function to do the Route53 HostedZone ID Lookup
+function getRoute53HostedZoneIDLookup() {
+  # Get the domain name
+  domain_name=${1}
+  # Get the hosted zone id
+  hosted_zone_id=$(aws route53 list-hosted-zones | jq -rc '.HostedZones[]|select(.Name == "'${domain_name}.'")')
+  if [[ ! $hosted_zone_id ]]; then
+    # If the hosted zone id is not found, return empty
+    return
+  else
+    # Return the hosted zone id
+    echo $hosted_zone_id | jq -r .Id | awk -F/ '{print $3}'
+  fi
+}
+
+# Function to create the appropriate Route53 HostedZone and NS records in the parent domain
+function createRoute53HostedZone() {
+  # Get the domain name
+  domain_name="${1}"
+  parent_domain="$(echo ${domain_name} | cut -d'.' -f2-)" # Get the domain name without the subdomain
+  parent_hosted_zone_id=$(getRoute53HostedZoneIDLookup ${parent_domain})
+
+  # Create the Route53 Hosted Zone
+  hz_create=$(aws route53 create-hosted-zone --name ${domain_name} --caller-reference $(date +%s))
+  ns_records=$(echo "${hz_create}" | jq -rc '.DelegationSet.NameServers[] | {Value: .}' | jq -sc)
+  # Create the data blob for the NS records
+  post_data=$(
+    jq -nc '{
+      Changes: [
+        { Action: "CREATE",
+          ResourceRecordSet: {
+            Name: "'${domain_name}'.",
+            Type: "NS",
+            TTL: 300,
+            ResourceRecords: '${ns_records}'
+          }
+        }
+      ]
+    }'
+  )
+
+  # Create the NS records in the parent domain
+  aws route53 change-resource-record-sets \
+    --hosted-zone-id ${parent_hosted_zone_id} \
+    --change-batch ${post_data} | jq -r
+}
+
+# Function to return errors for the Route53 HostedZone ID Lookup
+function route53Error() {
+  echo -e "\t❌ The Route53 Hosted Zone ID for \"${1}\" cannot be found."
 }

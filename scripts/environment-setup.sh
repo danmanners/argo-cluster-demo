@@ -29,6 +29,7 @@ tools=(
 required_env_vars=(
   "GitHub_Username"
   "AWS_Account_ID"
+  "Cloud_Domain_Name"
 )
 
 # Check if the required tools are installed
@@ -53,12 +54,47 @@ if aws sts get-caller-identity >/dev/null 2>&1; then
 fi
 # Check all required environment variables and ask the user to input them if not already set
 for user_input in "${required_env_vars[@]}"; do
-  parseUserInput $user_input
+  # Check if the user input is already set
+  if [[ -z "${!user_input}" ]]; then
+    parseUserInput $user_input
+  fi
 done
 
 # Check that everything looks good to the user; get confirmation
 echo "🔍 Please review the following required values:"
 checkUserInput "${required_env_vars[@]}"
+
+# Lookup the Route53 Hosted Zone ID
+printf "🔍 Looking up the Route53 Hosted Zone IDs...\n"
+
+# Get the Route53 Hosted Zone ID for the parent domain of Cloud_Domain_Name
+numCheck=$(echo ${Cloud_Domain_Name} | awk -F'.' '{print NF}')
+# If the $numCheck has 3 or more parts, we want to trim off the subdomain and look up the hosted zone ID for the domain
+if [[ $numCheck -gt 2 ]]; then
+  Cloud_Parent_Domain=$(echo "${Cloud_Domain_Name}" | cut -d'.' -f2-) # Get the domain name without the subdomain
+  r53_hosted_zone_id=$(getRoute53HostedZoneIDLookup ${Cloud_Parent_Domain})
+  if [[ -z "${r53_hosted_zone_id}" ]]; then
+    route53Error ${cdn}
+    exit 1
+  else
+    echo -e "\t🎉 Found the Route53 Hosted Zone ID for ${Cloud_Parent_Domain}: ${r53_hosted_zone_id}"
+  fi
+fi
+
+# Attempt to get the Route53 Hosted Zone ID for the Cloud_Domain_Name
+if [[ -z $(getRoute53HostedZoneIDLookup ${Cloud_Domain_Name}) ]]; then
+  route53Error ${Cloud_Domain_Name}
+  printf "\t❓ Do you want to create the Route53 Hosted Zone for ${Cloud_Domain_Name}? (y/n) "
+  read -r create_hosted_zone
+  if [[ $create_hosted_zone == "y" ]]; then
+    createRoute53HostedZone ${Cloud_Domain_Name}
+  else
+    echo -e "\t😕 Please create the Route53 Hosted Zone for ${Cloud_Domain_Name} and try again."
+    exit 1
+  fi
+else
+  echo -e "\t🎉 Found the Route53 Hosted Zone ID for ${Cloud_Domain_Name}: ${r53_hosted_zone_id}"
+fi
 
 # Check if the users Sealed Secrets Keypair exists
 echo "🔐 Checking if the Sealed Secrets Keypair exists..."

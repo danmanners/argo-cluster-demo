@@ -2,10 +2,7 @@
 # push the resulting image to both ECR and the GHCR Registry.
 
 name: Build and Push Bootstrapping Container
-on:
-  push:
-    branches:
-      - main
+on: workflow_dispatch
 
 jobs:
   build:
