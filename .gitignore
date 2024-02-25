@@ -9,6 +9,7 @@ node_modules/
 # Files
 *.pem
 *.key
+*.patch
 
 # Backup Files
 *.bak

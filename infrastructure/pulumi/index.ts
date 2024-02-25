@@ -5,8 +5,10 @@ import { securityGroup } from "./modules/security-groups";
 import { createInstance } from "./modules/kube-nodes";
 import { createBastion } from "./modules/bastion";
 import { r53record } from "./modules/dns";
-import { createOidcBucket } from "./modules/s3-k8s-oidc";
+// import { createOidcBucket } from "./modules/s3-k8s-oidc";
 import { createLoadBalancer } from "./modules/load-balancer";
+import { createEcsResources } from "./modules/ecs";
+
 // Importing Types
 import { nodeInfo } from "./types/types";
 
@@ -74,20 +76,34 @@ const nlb = createLoadBalancer(
   config.tags // Tags
 );
 
+// Create the ECS Cluster and associated resources
+const ecs = createEcsResources(
+  [
+    // Subnets
+    vpc.privSubnets[config.network.subnets.private[0].name].id,
+    vpc.privSubnets[config.network.subnets.private[1].name].id,
+  ],
+  sg_talos_configuration.arn,
+  iam_role.talosBootstrappingRole.arn,
+  `https://ghcr.io/${config.general.github_username}/${config.general.repo_name}`, // Image Name
+  "latest",
+  config.tags // Tags
+);
+
 // Create the OIDC S3 Bucket
 // const bucket = createOidcBucket(config);
 
-// Create the Bastion Node
-// This is ONLY for debugging purposes and will be removed in the future
-createBastion(
-  config.compute.bastion[0], // Node Config
-  config.cloud_auth.aws_region, // Region
-  config.cloud_auth.aws_account_id, // Account ID
-  config.amis, // AMI
-  config.network.vpc.cidr_block, // CIDR Block
-  vpc.id, // VPC
-  vpc.pubSubnets[config.compute.bastion[0].subnet_name].id, // Subnet
-  config.security_groups.bastion, // Security Groups
-  config.user_data.bastion, // User Data
-  config.tags // Tags
-);
+// // Create the Bastion Node
+// // This is ONLY for debugging purposes and will be removed in the future
+// createBastion(
+//   config.compute.bastion[0], // Node Config
+//   config.cloud_auth.aws_region, // Region
+//   config.cloud_auth.aws_account_id, // Account ID
+//   config.amis, // AMI
+//   config.network.vpc.cidr_block, // CIDR Block
+//   vpc.id, // VPC
+//   vpc.pubSubnets[config.compute.bastion[0].subnet_name].id, // Subnet
+//   config.security_groups.bastion, // Security Groups
+//   config.user_data.bastion, // User Data
+//   config.tags // Tags
+// );

@@ -25,6 +25,8 @@ required_env_vars=(
   "GitHub_Username"
   "AWS_Account_ID"
   "Cloud_Domain_Name"
+  "Pulumi_Stack_Name"
+  "_Pulumi_Config_Passphrase"
 )
 
 # Check if the required tools are installed
@@ -112,10 +114,6 @@ encryptSealedSecretsKey
 echo "🔏 Writing all repository secrets..."
 createGitHubRepoSecrets $GitHub_Username
 
-# Create the ECR Repository
-echo "📦 Creating the ECR Repository..."
-createECRRegistry
-
 # Upload the AGE Key to AWS Secrets Manager
 echo "🔑 Checking on the AGE Key in AWS Secrets Manager..."
 uploadAWSSecretsManagerSecret
@@ -126,7 +124,8 @@ replacePulumiValues \
   ${Cloud_Domain_Name} \
   ${GitHub_Username} \
   ${domain_hosted_zone_id} \
-  ${AWS_Account_ID}
+  ${AWS_Account_ID} \
+  $(getAWSSecretsManagerSecretARN)
 if [[ $? -ne 0 ]]; then
   echo -e "\t❌ Failed to replace the placeholder values in the Pulumi values.ts file."
   exit 1

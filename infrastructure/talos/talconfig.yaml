@@ -15,7 +15,7 @@ additionalMachineCertSans:
 
 nodes:
 # Provisionined in Private AZ 1
-- hostname: control-plane-01.DOMAIN # This domain must be replaced with your internal AWS Hosted Zone Domain
+- hostname: talos-01.DOMAIN # This domain must be replaced with your internal AWS Hosted Zone Domain
   disableSearchDomain: true
   ipAddress: 172.29.8.5
   controlPlane: true
@@ -32,10 +32,10 @@ nodes:
     - network: 0.0.0.0/0
       gateway: 172.29.8.1
 # Provisionined in Private AZ 1
-- hostname: kube-worker-1.DOMAIN # This domain must be replaced with your internal AWS Hosted Zone Domain
+- hostname: talos-02.DOMAIN # This domain must be replaced with your internal AWS Hosted Zone Domain
   disableSearchDomain: true
   ipAddress: 172.29.8.100
-  controlPlane: false
+  controlPlane: true
   installDisk: /dev/nvme0n1
   nameservers:
   - 169.254.169.253 # Magic AWS DNS Servers
@@ -49,10 +49,10 @@ nodes:
     - network: 0.0.0.0/0
       gateway: 172.29.8.1
 # Provisioned in Private AZ 2
-- hostname: kube-worker-2.DOMAIN # This domain must be replaced with your internal AWS Hosted Zone Domain
+- hostname: talos-03.DOMAIN # This domain must be replaced with your internal AWS Hosted Zone Domain
   disableSearchDomain: true
   ipAddress: 172.29.16.101
-  controlPlane: false
+  controlPlane: true
   installDisk: /dev/nvme0n1
   nameservers:
   - 169.254.169.253 # Magic AWS DNS Servers

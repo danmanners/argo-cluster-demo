@@ -6,6 +6,7 @@ export const general = {
   github_username: "your_github_username", // Replace this with your own GitHub Username
   repo_name: "your_github_repo_name", // Replace this with your own GitHub Repo Name
   public_hosted_zone: "your_hosted_zone_id", // Replace this with your own Route53 Hosted Zone ID
+  cloud_key_arn: "your_cloud_key_arn", // Replace this with your own KMS Key ARN
   aws_account_id: "your_aws_account_id", // Replace this with your own AWS Account ID
   bucket_name: "oidc_bucket_name", // Replace this with your own S3 Bucket Name
   domain_comment: "Internal DNS HostedZone for the cloud cluster",
@@ -15,7 +16,6 @@ export const general = {
 export const tags = {
   environment: "homelab",
   project_name: "cloud-homelab",
-  repo_name: "${general.repo_name}",
   github_url: `https://github.com/${general.github_username}/${general.repo_name}`,
 };
 

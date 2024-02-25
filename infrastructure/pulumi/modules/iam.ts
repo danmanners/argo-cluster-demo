@@ -374,6 +374,46 @@ export function iamCreation(config: any) {
     }),
   });
 
+  const talosBootstrappingPolicy = new aws.iam.Policy(
+    "talosBootstrappingPolicy",
+    {
+      path: "/",
+      description: "Policy for fetching Cloud Age Secret",
+      policy: JSON.stringify({
+        Version: "2012-10-17",
+        Statement: [
+          {
+            Sid: "VisualEditor0",
+            Effect: "Allow",
+            Action: [
+              "secretsmanager:GetSecretValue",
+              "secretsmanager:DescribeSecret",
+            ],
+            Resource: [config.cloud_age_arn],
+          },
+        ],
+      }),
+    }
+  );
+
+  // Create IAM Role
+  const talosBootstrappingRole = new aws.iam.Role("talosBootstrappingRole", {
+    assumeRolePolicy: JSON.stringify({
+      Version: "2012-10-17",
+      Statement: [
+        {
+          Action: "sts:AssumeRole",
+          Effect: "Allow",
+          Sid: "",
+          Principal: {
+            Service: "ec2.amazonaws.com",
+          },
+        },
+      ],
+    }),
+    tags: Object.assign({}, config.tags, { Name: "talos-bootstrapping-role" }),
+  });
+
   // Create IAM Role
   const kubeNodeRole = new aws.iam.Role("kubeNodeRole", {
     assumeRolePolicy: JSON.stringify({
@@ -390,6 +430,12 @@ export function iamCreation(config: any) {
       ],
     }),
     tags: Object.assign({}, config.tags, { Name: "kube-node-role" }),
+  });
+
+  // Associcate IAM to Role
+  new aws.iam.RolePolicyAttachment("talosBootstrappingAttachment", {
+    role: talosBootstrappingRole.name,
+    policyArn: talosBootstrappingPolicy.arn,
   });
 
   // Associcate IAM to Role
@@ -421,7 +467,8 @@ export function iamCreation(config: any) {
   );
 
   return {
-    iamInstanceProfile: iamInstanceProfile,
-    kubeNodeRole: kubeNodeRole,
+    iamInstanceProfile: iamInstanceProfile, // IAM Instance Profile
+    kubeNodeRole: kubeNodeRole, // Kube Node Role
+    talosBootstrappingRole: talosBootstrappingRole, // Talos Bootstrapping Role
   };
 }

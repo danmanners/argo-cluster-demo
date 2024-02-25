@@ -8,9 +8,16 @@ function getGitRootPath() {
 # Function to parse through all of the user defined input
 function parseUserInput() {
   user_input=${1}
-  if [[ -z "${!user_input}" ]]; then
-    printf "\t> Please enter your $(echo ${user_input} | sed "s|_|\ |g"): "
-    read -r $user_input
+  if [[ -z ${!user_input} ]]; then
+    if [[ ${user_input} == _* ]]; then
+      stripped_name="${user_input:1}"
+      printf "\t> Please enter your $(echo ${stripped_name} | sed "s|_|\ |g"): "
+      read -s $user_input
+      echo
+    else
+      printf "\t> Please enter your $(echo ${user_input} | sed "s|_|\ |g"): "
+      read -r $user_input
+    fi
   fi
 }
 
@@ -18,7 +25,18 @@ function parseUserInput() {
 function checkUserInput() {
   user_inputs=("$@")
   for user_input in "${user_inputs[@]}"; do
-    echo -e "\t- $(echo ${user_input} | sed "s|_|\ |g"): ${!user_input}"
+    if [[ ${user_input} == _* ]]; then # Check if the variable starts with an underscore
+      stripped_name="${user_input:1}"
+      secret_check="$(if [ "${!user_input}" ]; then echo "🔐 Secret Set"; fi)"
+      # Confirm that the secret is set
+      if [[ -z "${!user_input}" ]]; then
+        echo -e "\t- $(echo ${stripped_name} | sed "s|_|\ |g"): ❌ Secret not set; exiting script."
+        exit 1
+      fi
+      echo -e "\t- $(echo ${stripped_name} | sed "s|_|\ |g"): ${secret_check}"
+    else # If the variable does not start with an underscore, we need to add the exclamation point to the variable
+      echo -e "\t- $(echo ${user_input} | sed "s|_|\ |g"): ${!user_input}"
+    fi
   done
   printf "🔍 Do these look correct? (y/n) "
   read -r confirm
@@ -181,6 +199,8 @@ function createGitHubRepoSecrets() {
   remote_repo="${1}/$(basename -s .git $(git config --get remote.origin.url))"
   # Provide the list of secrets that we want to create in the repository
   secrets=(
+    "Pulumi_Stack_Name"
+    "_Pulumi_Config_Passphrase"
     "AWS_Account_ID"
     "aws_access_key_id"
     "aws_secret_access_key"
@@ -359,16 +379,18 @@ function replacePulumiValues() {
   github_username="${2}"
   public_hosted_zone_id="${3}"
   aws_account_id="${4}"
+  cloud_key_arn="${5}"
   repository_name="$(basename -s .git $(git config --get remote.origin.url))"
 
   # Get the pulumi values file
   pulumi_values_file="$(getGitRootPath)/infrastructure/pulumi/env/values.ts"
   # Replace the placeholder values in the pulumi values file
-  sed -i '' -e "s|your_domain_here|${domain}|" ${pulumi_values_file}
-  sed -i '' -e "s|your_github_username|${github_username}|" ${pulumi_values_file}
-  sed -i '' -e "s|your_github_repo_name|${repository_name}|" ${pulumi_values_file}
-  sed -i '' -e "s|your_hosted_zone_id|${public_hosted_zone_id}|" ${pulumi_values_file}
-  sed -i '' -e "s|your_aws_account_id|${aws_account_id}|" ${pulumi_values_file}
+  sed -i '' -e "s|your_domain_here|${domain}|" ${pulumi_values_file}                   # Domain Name
+  sed -i '' -e "s|your_github_username|${github_username}|" ${pulumi_values_file}      # GitHub Username
+  sed -i '' -e "s|your_github_repo_name|${repository_name}|" ${pulumi_values_file}     # GitHub Repository Name
+  sed -i '' -e "s|your_hosted_zone_id|${public_hosted_zone_id}|" ${pulumi_values_file} # Public Hosted Zone ID
+  sed -i '' -e "s|your_aws_account_id|${aws_account_id}|" ${pulumi_values_file}        # AWS Account ID
+  sed -i '' -e "s|your_cloud_key_arn|${cloud_key_arn}|" ${pulumi_values_file}          # ARN for the previously uploaded Cloud Key
 }
 
 # Function to deploy a helm chart
@@ -416,5 +438,19 @@ function sourceEnvFile() {
   else
     echo "Invalid directory path"
     exit 1
+  fi
+}
+
+# Function to get the ARN of the age key in AWS Secrets Manager
+function getAWSSecretsManagerSecretARN() {
+  # Specify the secret name
+  secret_name="${1:-"cloud-age-key"}"
+  # Get the secret ARN
+  secret_arn=$(aws secretsmanager list-secrets | jq -r '.SecretList[] | select(.Name=="'${secret_name}'") | .ARN')
+  # Check if the secret ARN exists
+  if [[ -z "${secret_arn}" ]]; then
+    echo "none"
+  else
+    echo "${secret_arn}"
   fi
 }

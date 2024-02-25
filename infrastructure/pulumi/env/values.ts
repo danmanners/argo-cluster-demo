@@ -6,6 +6,7 @@ export const general = {
   github_username: "danmanners", // Replace this with your own GitHub Username
   repo_name: "aws-argo-cluster-demo", // Replace this with your own GitHub Repo Name
   public_hosted_zone: "Z03888583JPJXM48Y7Q3R", // Replace this with your own Route53 Hosted Zone ID
+  cloud_key_arn: "arn:aws:secretsmanager:us-east-1:977656673179:secret:cloud-age-key-RvGGrM", // Replace this with your own KMS Key ARN
   aws_account_id: "977656673179", // Replace this with your own AWS Account ID
   bucket_name: "oidc_bucket_name", // Replace this with your own S3 Bucket Name
   domain_comment: "Internal DNS HostedZone for the cloud cluster",
