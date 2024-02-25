@@ -199,7 +199,6 @@ function createGitHubRepoSecrets() {
   remote_repo="${1}/$(basename -s .git $(git config --get remote.origin.url))"
   # Provide the list of secrets that we want to create in the repository
   secrets=(
-    "Pulumi_Stack_Name"
     "_Pulumi_Config_Passphrase"
     "AWS_Account_ID"
     "aws_access_key_id"
@@ -212,15 +211,39 @@ function createGitHubRepoSecrets() {
     upperSecret=$(echo ${secret} | tr '[:lower:]' '[:upper:]')
     printf "\t✨ Creating the ${upperSecret} secret..."
     if [[ "${!secret}" ]]; then
-      gh secret set ${upperSecret} -R $remote_repo -b "${!secret}" >/dev/null 2>&1
+      gh secret set ${upperSecret} -R ${remote_repo} -b "${!secret}" >/dev/null 2>&1
     else
-      gh secret set ${upperSecret} -R $remote_repo -b "$(aws configure get default.${secret})" >/dev/null 2>&1
+      gh secret set ${upperSecret} -R ${remote_repo} -b "$(aws configure get default.${secret})" >/dev/null 2>&1
     fi
     # Check if the secret was created successfully
     if [[ $? -eq 0 ]]; then
       echo -e "🎉 secret created."
     else
       echo -e "❌ secret failed to create."
+    fi
+  done
+}
+
+# Function to define and create our repository variables using the GitHub CLI
+function createGitHubRepoVariables() {
+  # Get the repository name
+  remote_repo="${1}/$(basename -s .git $(git config --get remote.origin.url))"
+  # Provide the list of variables that we want to create in the repository
+  variables=(
+    "Pulumi_Stack_Name"
+    "Pulumi_Cloud_URL"
+  )
+  # Loop through the variables and create them in the repository
+  for variable in "${variables[@]}"; do
+    # Check if the variable already exists
+    upperVariable=$(echo ${variable} | tr '[:lower:]' '[:upper:]')
+    printf "\t✨ Creating the ${upperVariable} variable..."
+    gh variable set ${upperVariable} -R ${remote_repo} -b "${!variable}" >/dev/null 2>&1
+    # Check if the variable was created successfully
+    if [[ $? -eq 0 ]]; then
+      echo -e "🎉 variable created."
+    else
+      echo -e "❌ variable failed to create."
     fi
   done
 }

@@ -9,23 +9,40 @@ on:
       - main
 
 jobs:
-  build:
+  infrastructure-pulumi-preview:
     runs-on: ubuntu-latest
     steps:
       # Configures AWS credentials
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.REGION }}
+
       # Checkout the repository
       - name: Checkout
         uses: actions/checkout@v4.1.1
+
+      # Setup Node LTS
+      - name: Setup Node LTS ✨
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: yarn
+          cache-dependency-path: ./infrastructure/pulumi/yarn.lock
+
+      # Install dependencies
+      - name: Installing dependencies 📦️
+        working-directory: ./infrastructure/pulumi
+        run: yarn install
+
       # Run Pulumi Preview
       - uses: pulumi/actions@v5
         with:
           command: preview
           work-dir: ./infrastructure/pulumi
-          stack-name: ${{ secrets.PULUMI_STACK_NAME }}
+          cloud-url: ${{ vars.PULUMI_CLOUD_URL }}
+          stack-name: ${{ vars.PULUMI_STACK_NAME }}
         env:
           PULUMI_CONFIG_PASSPHRASE: ${{ secrets._PULUMI_CONFIG_PASSPHRASE }}

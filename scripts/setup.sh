@@ -26,6 +26,7 @@ required_env_vars=(
   "AWS_Account_ID"
   "Cloud_Domain_Name"
   "Pulumi_Stack_Name"
+  "Pulumi_Cloud_URL"
   "_Pulumi_Config_Passphrase"
 )
 
@@ -113,6 +114,10 @@ encryptSealedSecretsKey
 # Get the current list of repository secrets
 echo "🔏 Writing all repository secrets..."
 createGitHubRepoSecrets $GitHub_Username
+
+# Get the current list of repository variables
+echo "🔏 Writing all repository variables..."
+createGitHubRepoVariables $GitHub_Username
 
 # Upload the AGE Key to AWS Secrets Manager
 echo "🔑 Checking on the AGE Key in AWS Secrets Manager..."
