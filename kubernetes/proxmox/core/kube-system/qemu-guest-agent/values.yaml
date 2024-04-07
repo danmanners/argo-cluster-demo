@@ -1,0 +1,68 @@
+global:
+  nameOverride: &name qemu-guest
+
+defaultPodOptions:
+  priorityClassName: system-node-critical
+  dnsPolicy: ClusterFirstWithHostNet
+  hostNetwork: true
+  tolerations:
+  - operator: Exists
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: kubernetes.io/arch
+              operator: In
+              values:
+              - arm64
+          topologyKey: kubernetes.io/hostname
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/arch
+            operator: In
+            values:
+            - amd64
+        - matchExpressions:
+          - key: kubernetes.io/os
+            operator: In
+            values:
+            - linux
+
+controllers:
+  qemu-guest-agent:
+    replicas: 1
+    type: daemonset
+    strategy: Recreate
+    containers:
+      qemu-guest-agent:
+        nameOverride: *name
+        securityContext:
+          privileged: true
+        image:
+          repository: ghcr.io/danmanners/qemu-guest-agent
+          tag: fedora-41
+          pullPolicy: IfNotPresent
+        env:
+          NODE_NAME:
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: spec.nodeName
+        probes:
+          readiness:
+            enabled: false
+          startup:
+            enabled: false
+          liveness:
+            enabled: false
+
+persistence:
+  qemu:
+    enabled: true
+    type: hostPath
+    hostPath: /dev/virtio-ports/org.qemu.guest_agent.0

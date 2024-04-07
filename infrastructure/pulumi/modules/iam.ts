@@ -383,13 +383,24 @@ export function iamCreation(config: any) {
         Version: "2012-10-17",
         Statement: [
           {
-            Sid: "VisualEditor0",
             Effect: "Allow",
             Action: [
               "secretsmanager:GetSecretValue",
               "secretsmanager:DescribeSecret",
             ],
-            Resource: [config.cloud_age_arn],
+            Resource: [config.general.cloud_key_arn],
+          },
+          {
+            Effect: "Allow",
+            Action: ["logs:DescribeLogGroups", "logs:DescribeLogStreams"],
+            Resource: [
+              `arn:aws:logs:${config.cloud_auth.aws_region}:${config.general.aws_account_id}:log-group::log-stream`,
+            ],
+          },
+          {
+            Effect: "Allow",
+            Action: ["ecs:DeleteCluster"],
+            Resource: ["*"],
           },
         ],
       }),
@@ -406,7 +417,15 @@ export function iamCreation(config: any) {
           Effect: "Allow",
           Sid: "",
           Principal: {
-            Service: "ec2.amazonaws.com",
+            Service: "batch.amazonaws.com",
+          },
+        },
+        {
+          Action: "sts:AssumeRole",
+          Effect: "Allow",
+          Sid: "",
+          Principal: {
+            Service: "ecs.amazonaws.com",
           },
         },
       ],

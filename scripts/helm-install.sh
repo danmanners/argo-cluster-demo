@@ -15,4 +15,6 @@ deployHelmChart \
     ${HELM_APP_NAME} \
     ${HELM_APP_VERSION} \
     ${HELM_APP_NAMESPACE} \
+    ${ADDITIONAL_INSTALL:-''} \
+    ${HELM_APP_NAME_OVERRIDE:-''} \
     ${DRY_RUN}

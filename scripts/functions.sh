@@ -425,7 +425,16 @@ function deployHelmChart() {
   HELM_APP_NAME=${4}
   HELM_APP_VERSION=${5}
   HELM_APP_NAMESPACE=${6}
-  DRY_RUN=${7:-"none"}
+  ADDITIONAL_INSTALL=${7}
+  APP_NAME_OVERRIDE=${8}
+  DRY_RUN=${9:-"none"}
+
+  # If Additional Install is set, install the additional resources
+  if [[ -n ${ADDITIONAL_INSTALL} ]]; then
+    for i in $(echo ${ADDITIONAL_INSTALL} | tr "," " "); do
+      kubectl apply -f ${i} --dry-run=${DRY_RUN}
+    done
+  fi
 
   # Add the Helm repository
   helm repo add ${HELM_REPO_NAME} ${HELM_REPO_SOURCE}
@@ -434,12 +443,18 @@ function deployHelmChart() {
   helm repo update
 
   # Template out and install the Helm chart via pipe to `kubectl apply`
-  echo "helm template ${HELM_APP_NAME} ${HELM_REPO_NAME}/${HELM_APP_NAME} --version ${HELM_APP_VERSION} --values ${APP_DIRECTORY}/values.yaml -n ${HELM_APP_NAMESPACE} | kubectl apply -f - --dry-run=${DRY_RUN}"
-  helm template ${HELM_APP_NAME} ${HELM_REPO_NAME}/${HELM_APP_NAME} \
+  if [[ ${APP_NAME_OVERRIDE} ]]; then
+    DEPLOY_NAME=${APP_NAME_OVERRIDE}
+  else
+    DEPLOY_NAME=${HELM_APP_NAME}
+  fi
+
+  echo "helm template ${DEPLOY_NAME} ${HELM_REPO_NAME}/${HELM_APP_NAME} --version ${HELM_APP_VERSION} --values ${APP_DIRECTORY}/values.yaml -n ${HELM_APP_NAMESPACE} | kubectl apply -f - --dry-run=${DRY_RUN}"
+  helm template ${DEPLOY_NAME} ${HELM_REPO_NAME}/${HELM_APP_NAME} \
     --version ${HELM_APP_VERSION} \
     --values ${APP_DIRECTORY}/values.yaml \
     -n ${HELM_APP_NAMESPACE} |
-    kubectl apply -f - --dry-run=${DRY_RUN}
+    kubectl apply -f - -n ${HELM_APP_NAMESPACE} --dry-run=${DRY_RUN}
 }
 
 # Function to check and set for a default value with Kubectl dry-runs
@@ -456,7 +471,10 @@ function checkKubectlDryRun() {
 function sourceEnvFile() {
   # Check if the first argument is a valid directory path
   if [ -d "${1}" ]; then
-    export $(cat ${1}/env.sh | grep -v '#' | xargs)
+    while read -r line; do
+      export ${line}
+    done <${1}/env.sh
+    # export $(cat ${1}/env.sh | grep -Ev '#|ADDITION' | xargs)
     return 0
   else
     echo "Invalid directory path"
@@ -476,4 +494,11 @@ function getAWSSecretsManagerSecretARN() {
   else
     echo "${secret_arn}"
   fi
+}
+
+# Sign all certificates in the cluster
+function signClusterCSRs() {
+  for cert in $(kubectl get certificatesigningrequests.certificates.k8s.io | tail -n+2 | awk '{print $1}'); do
+    kubectl certificate approve ${cert}
+  done
 }

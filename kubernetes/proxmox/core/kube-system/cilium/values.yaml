@@ -1,0 +1,125 @@
+# On Talos, we can use the Kubespan port.
+# 7445 is the default port for the KubeSpan API server,
+# and will load-balance to the Kubernetes API service
+# on the control plane nodes.
+k8sServiceHost: localhost
+k8sServicePort: 7445
+
+name: cilium
+debug:
+  enabled: false
+rbac:
+  create: true
+cluster:
+  name: proxmox
+rollOutCiliumPods: true
+image:
+  repository: quay.io/cilium/cilium
+  pullPolicy: IfNotPresent
+  useDigest: true
+
+operator:
+  enabled: true
+  rollOutPods: true
+  replicas: 1
+  serviceAccountName: cilium-operator
+
+kubeProxyReplacement: true
+securityContext:
+  privileged: true
+  capabilities:
+    ciliumAgent: [CHOWN, KILL, NET_ADMIN, NET_RAW, IPC_LOCK, SYS_ADMIN, SYS_RESOURCE, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    cleanCiliumState: [NET_ADMIN, SYS_ADMIN, SYS_RESOURCE]
+
+cgroup:
+  hostRoot: /sys/fs/cgroup
+  autoMount:
+    enabled: false
+
+
+tolerations:
+- operator: Exists
+
+# Required to be disabled on Raspbian; this breaks things if it's enabled.
+l7Proxy: false
+
+podDisruptionBudget:
+  enabled: true
+  maxUnavailable: 2
+
+updateStrategy:
+  rollingUpdate:
+    maxUnavailable: 2
+  type: RollingUpdate
+
+cni:
+  install: true
+
+containerRuntime:
+  integration: none
+
+customCalls:
+  enabled: false
+
+healthChecking: true
+healthPort: 9876
+hostFirewall:
+  enabled: false
+hostPort:
+  enabled: false
+
+hubble:
+  enabled: false # Set True Later
+  tls:
+    auto:
+      method: cronJob
+  relay:
+    enabled: false # Set True Later
+  ui:
+    enabled: false # Set True Later
+    standalone:
+      enabled: false
+    rollOutPods: true
+    replicas: 2
+    updateStrategy:
+      rollingUpdate:
+        maxUnavailable: 1
+      type: RollingUpdate
+    securityContext:
+      enabled: true
+    ingress:
+      enabled: false
+
+identityAllocationMode: "crd"
+installIptablesRules: true
+installNoConntrackIptablesRules: false
+
+ipam:
+  mode: "kubernetes"
+
+ipv4:
+  enabled: true
+
+egressGateway:
+  enabled: false
+
+monitor:
+  enabled: false
+
+nodePort:
+  enabled: true
+  bindProtection: true
+  autoProtectPortRange: true
+  enableHealthCheck: true
+
+policyEnforcementMode: "default"
+pprof:
+  enabled: false
+
+prometheus:
+  enabled: false
+  port: 9090
+  serviceMonitor:
+    enabled: false
+    labels: {}
+  metrics: ~

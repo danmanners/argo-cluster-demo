@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Set the URL we'll hit twice
 export URL="http://169.254.169.254/latest/meta-data/iam/security-credentials"
 
@@ -22,11 +24,11 @@ EOF
 git clone \
     --depth 1 \
     --branch feature/restructure \
-    https://github.com/GITHUB_USERNAME/GITHUB_REPOSITORY_NAME.git \
-    /tmp/GITHUB_REPOSITORY_NAME
+    https://github.com/danmanners/argo-cluster-demo.git \
+    /tmp/argo-cluster-demo
 
 # Change to the repo directory and Build the Talos Configs
-cd /tmp/GITHUB_REPOSITORY_NAME/iac/cloud/talos
+cd /tmp/argo-cluster-demo/infrastructure/talos/cloud
 sops -d -i talsecret.sops.yaml
 talhelper genconfig
 

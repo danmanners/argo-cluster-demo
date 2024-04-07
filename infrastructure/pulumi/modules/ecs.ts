@@ -58,6 +58,7 @@ export function createEcsResources(
       taskDefinition: "talos-bootstrap",
       desiredCount: 1,
       iamRole: awsIamRole,
+      enableExecuteCommand: true,
       networkConfiguration: {
         subnets: vpcSubnets,
         securityGroups: [securityGroup],

@@ -1,0 +1,141 @@
+clusterName: proxmox
+talosVersion: v1.6.7
+kubernetesVersion: 1.29.3
+endpoint: "https://k8s-cluster.homelab.danmanners.com:6443" # This domain must be replaced with your internal AWS Hosted Zone Domain
+
+cniConfig:
+  name: none
+
+additionalApiServerCertSans:
+- 10.4.0.40
+- 10.4.0.41
+- 10.4.0.42
+- 10.4.0.43
+
+additionalMachineCertSans:
+- 10.4.0.40
+- 10.4.0.41
+- 10.4.0.42
+- 10.4.0.43
+- k8s-cluster.homelab.danmanners.com # This domain must be replaced with your internal AWS Hosted Zone Domain
+
+nodes:
+# Provisionined in Private AZ 1
+- hostname: talos-01.homelab.danmanners.com # This domain must be replaced with your internal AWS Hosted Zone Domain
+  disableSearchDomain: true
+  ipAddress: 10.4.0.41
+  controlPlane: true
+  installDisk: /dev/sda
+  nameservers:
+  - 10.4.0.1
+  networkInterfaces:
+  - interface: ens18
+    dhcp: false
+    mtu: 1500
+    addresses:
+    - 10.4.0.41/23
+    routes:
+    - network: 0.0.0.0/0
+      gateway: 10.4.0.1
+    vip:
+      ip: 10.4.0.40
+  - interface: eth1
+    dhcp: false
+    mtu: 8900
+    addresses:
+    - 10.44.0.41/24
+- hostname: talos-02.homelab.danmanners.com # This domain must be replaced with your internal AWS Hosted Zone Domain
+  disableSearchDomain: true
+  ipAddress: 10.4.0.42
+  controlPlane: true
+  installDisk: /dev/sda
+  nameservers:
+  - 10.4.0.1
+  networkInterfaces:
+  - interface: ens18
+    dhcp: false
+    mtu: 1500
+    addresses:
+    - 10.4.0.42/23
+    routes:
+    - network: 0.0.0.0/0
+      gateway: 10.4.0.1
+    vip:
+      ip: 10.4.0.40
+  - interface: eth1
+    dhcp: false
+    mtu: 8900
+    addresses:
+    - 10.44.0.42/24
+- hostname: talos-03.homelab.danmanners.com # This domain must be replaced with your internal AWS Hosted Zone Domain
+  disableSearchDomain: true
+  ipAddress: 10.4.0.43
+  controlPlane: true
+  installDisk: /dev/sda
+  nameservers:
+  - 10.4.0.1
+  networkInterfaces:
+  - interface: ens18
+    dhcp: false
+    mtu: 1500
+    addresses:
+    - 10.4.0.43/23
+    routes:
+    - network: 0.0.0.0/0
+      gateway: 10.4.0.1
+    vip:
+      ip: 10.4.0.40
+  - interface: eth1
+    dhcp: false
+    mtu: 8900
+    addresses:
+    - 10.44.0.43/24
+
+patches:
+- |-
+  cluster:
+    proxy:
+      disabled: true
+    network:
+      podSubnets:
+        - 10.250.0.0/16
+      serviceSubnets:
+        - 10.251.0.0/16
+    extraManifests:
+      - https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/v0.8.1/deploy/ha-install.yaml
+  machine:
+    kubelet:
+      extraArgs:
+        rotate-server-certificates: "true"
+      extraConfig:
+        maxPods: 200
+      nodeIP:
+        validSubnets:
+          - 10.4.0.0/23
+          - 10.44.0.0/24
+    sysctls:
+      vm.max_map_count: "524288"
+      fs.file-max: "131072"
+      fs.inotify.max_user_watches: "1048576"
+      fs.inotify.max_user_instances: "8192"
+    time:
+      disabled: true
+      servers:
+        - 219.239.35.0
+        - 219.239.35.4
+        - 219.239.35.8
+
+controlPlane:
+  schematic: {}
+  patches:
+  - |-
+    cluster:
+      allowSchedulingOnMasters: true
+      coreDNS:
+        disabled: true
+  - |-
+    - op: remove
+      path: /cluster/apiServer/admissionControl
+
+worker:
+  schematic: {}

@@ -7,7 +7,7 @@ import { createBastion } from "./modules/bastion";
 import { r53record } from "./modules/dns";
 // import { createOidcBucket } from "./modules/s3-k8s-oidc";
 import { createLoadBalancer } from "./modules/load-balancer";
-import { createEcsResources } from "./modules/ecs";
+import { createBatchResources } from "./modules/batch";
 
 // Importing Types
 import { nodeInfo } from "./types/types";
@@ -76,19 +76,33 @@ const nlb = createLoadBalancer(
   config.tags // Tags
 );
 
-// Create the ECS Cluster and associated resources
-const ecs = createEcsResources(
+// Create the Batch Resources
+const batch = createBatchResources(
   [
     // Subnets
     vpc.privSubnets[config.network.subnets.private[0].name].id,
     vpc.privSubnets[config.network.subnets.private[1].name].id,
   ],
-  sg_talos_configuration.arn,
-  iam_role.talosBootstrappingRole.arn,
+  sg_talos_configuration.id, // Security Group
+  iam_role.talosBootstrappingRole.arn, // IAM Role
   `https://ghcr.io/${config.general.github_username}/${config.general.repo_name}`, // Image Name
-  "latest",
+  "latest", // Image Tag
   config.tags // Tags
 );
+
+// Create the ECS Cluster and associated resources
+// const ecs = createEcsResources(
+//   [
+//     // Subnets
+//     vpc.privSubnets[config.network.subnets.private[0].name].id,
+//     vpc.privSubnets[config.network.subnets.private[1].name].id,
+//   ],
+//   sg_talos_configuration.arn,
+//   iam_role.talosBootstrappingRole.arn,
+//   `https://ghcr.io/${config.general.github_username}/${config.general.repo_name}`, // Image Name
+//   "latest",
+//   config.tags // Tags
+// );
 
 // Create the OIDC S3 Bucket
 // const bucket = createOidcBucket(config);

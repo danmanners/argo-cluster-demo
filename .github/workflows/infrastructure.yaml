@@ -1,13 +1,18 @@
 # This workflow will run Pulumi Preview against the AWS Infrastructure
 name: Pulumi Preview
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
+    paths:
+      - infrastructure/pulumi/**
   pull_request:
     branches:
       - main
-
+    paths:
+      - infrastructure/pulumi/**
+  
 jobs:
   infrastructure-pulumi-preview:
     runs-on: ubuntu-latest
