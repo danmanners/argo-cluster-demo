@@ -16,5 +16,7 @@ deployHelmChart \
     ${HELM_APP_VERSION} \
     ${HELM_APP_NAMESPACE} \
     ${ADDITIONAL_INSTALL:-''} \
+    ${ADDITIONAL_KUSTOMIZE:-''} \
+    ${SOPS_SECRETS:-''} \
     ${HELM_APP_NAME_OVERRIDE:-''} \
     ${DRY_RUN}

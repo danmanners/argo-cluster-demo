@@ -426,13 +426,29 @@ function deployHelmChart() {
   HELM_APP_VERSION=${5}
   HELM_APP_NAMESPACE=${6}
   ADDITIONAL_INSTALL=${7}
-  APP_NAME_OVERRIDE=${8}
-  DRY_RUN=${9:-"none"}
+  ADDITIONAL_KUSTOMIZE=${8}
+  SOPS_SECRETS=${9}
+  APP_NAME_OVERRIDE=${10}
+  DRY_RUN=${11:-"none"}
 
   # If Additional Install is set, install the additional resources
   if [[ -n ${ADDITIONAL_INSTALL} ]]; then
     for i in $(echo ${ADDITIONAL_INSTALL} | tr "," " "); do
-      kubectl apply -f ${i} --dry-run=${DRY_RUN}
+      kubectl apply -f ${i} --namespace ${HELM_APP_NAMESPACE} --dry-run=${DRY_RUN}
+    done
+  fi
+
+  # If Additional Kustomization is set, install the additional resources
+  if [[ -n ${ADDITIONAL_KUSTOMIZE} ]]; then
+    for i in $(echo ${ADDITIONAL_KUSTOMIZE} | tr "," " "); do
+      kubectl apply -k ${i} --namespace ${HELM_APP_NAMESPACE} --dry-run=${DRY_RUN}
+    done
+  fi
+
+  # If SOPS Secrets are set, decrypt the secrets and apply them to the cluster
+  if [[ -n ${SOPS_SECRETS} ]]; then
+    for i in $(echo ${SOPS_SECRETS} | tr "," " "); do
+      sops -d ${i} | kubectl apply -f - --namespace ${HELM_APP_NAMESPACE} --dry-run=${DRY_RUN}
     done
   fi
 
@@ -472,7 +488,11 @@ function sourceEnvFile() {
   # Check if the first argument is a valid directory path
   if [ -d "${1}" ]; then
     while read -r line; do
-      export ${line}
+      if [[ ${line} == \#* ]]; then
+        continue
+      else
+        export ${line}
+      fi
     done <${1}/env.sh
     # export $(cat ${1}/env.sh | grep -Ev '#|ADDITION' | xargs)
     return 0
