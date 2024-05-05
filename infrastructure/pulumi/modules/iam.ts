@@ -399,7 +399,12 @@ export function iamCreation(config: any) {
           },
           {
             Effect: "Allow",
-            Action: ["ecs:DeleteCluster"],
+            Action: [
+              "ecs:DeleteCluster",
+              "ecs:ListClusters",
+              "ecs:CreateCluster",
+              "ecs:DescribeClusters",
+            ],
             Resource: ["*"],
           },
         ],
