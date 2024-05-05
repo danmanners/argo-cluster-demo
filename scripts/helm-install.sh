@@ -19,4 +19,5 @@ deployHelmChart \
     ${ADDITIONAL_KUSTOMIZE:-''} \
     ${SOPS_SECRETS:-''} \
     ${HELM_APP_NAME_OVERRIDE:-''} \
+    ${CREATE_SEALED_SECRET:-''} \
     ${DRY_RUN}

@@ -1,0 +1,7 @@
+nameOverride: gha-rs-controller
+
+controllerServiceAccount:
+  name: gha-rs-controller
+
+flags:
+  updateStrategy: eventual

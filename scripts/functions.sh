@@ -429,7 +429,8 @@ function deployHelmChart() {
   ADDITIONAL_KUSTOMIZE=${8}
   SOPS_SECRETS=${9}
   APP_NAME_OVERRIDE=${10}
-  DRY_RUN=${11:-"none"}
+  CREATE_SEALED_SECRET=${11}
+  DRY_RUN=${12:-"none"}
 
   # If Additional Install is set, install the additional resources
   if [[ -n ${ADDITIONAL_INSTALL} ]]; then
@@ -450,6 +451,11 @@ function deployHelmChart() {
     for i in $(echo ${SOPS_SECRETS} | tr "," " "); do
       sops -d ${i} | kubectl apply -f - --namespace ${HELM_APP_NAMESPACE} --dry-run=${DRY_RUN}
     done
+  fi
+
+  # If CREATE_SEALED_SECRET is set, create the Sealed Secrets TLS Secret
+  if [[ ${CREATE_SEALED_SECRET} == "true" ]]; then
+    createSealedSecretsTLSSecret ${HELM_APP_NAMESPACE}
   fi
 
   # Add the Helm repository
@@ -521,4 +527,15 @@ function signClusterCSRs() {
   for cert in $(kubectl get certificatesigningrequests.certificates.k8s.io | tail -n+2 | awk '{print $1}'); do
     kubectl certificate approve ${cert}
   done
+}
+
+# Function to create the Sealed Secrets TLS Secret
+function createSealedSecretsTLSSecret() {
+  # Get the Sealed Secrets namespace
+  namespace=${1:-secrets}
+  # Create the TLS Secret
+  kubectl create secret tls sealed-secrets-key \
+    --cert=$(getGitRootPath)/keys/sealed-secret.crt \
+    --key=$(getGitRootPath)/keys/sealed-secret.key \
+    -n ${namespace}
 }

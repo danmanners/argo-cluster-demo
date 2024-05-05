@@ -1,0 +1,12 @@
+githubConfigUrl: https://github.com/kastiron-ci
+githubConfigSecret: github-auth
+
+controllerServiceAccount:
+  name: gha-rs-controller
+  namespace: actions
+
+minRunners: 2
+maxRunners: 8
+runnerGroup: "kastiron-ci"
+containerMode:
+  type: "dind"

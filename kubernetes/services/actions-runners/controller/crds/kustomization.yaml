@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+commonAnnotations:
+  argocd.argoproj.io/sync-options: ServerSideApply=true
+
+resources:
+- https://raw.githubusercontent.com/actions/actions-runner-controller/gha-runner-scale-set-0.9.1/charts/gha-runner-scale-set-controller/crds/actions.github.com_autoscalinglisteners.yaml
+- https://raw.githubusercontent.com/actions/actions-runner-controller/gha-runner-scale-set-0.9.1/charts/gha-runner-scale-set-controller/crds/actions.github.com_autoscalingrunnersets.yaml
+- https://raw.githubusercontent.com/actions/actions-runner-controller/gha-runner-scale-set-0.9.1/charts/gha-runner-scale-set-controller/crds/actions.github.com_ephemeralrunners.yaml
+- https://raw.githubusercontent.com/actions/actions-runner-controller/gha-runner-scale-set-0.9.1/charts/gha-runner-scale-set-controller/crds/actions.github.com_ephemeralrunnersets.yaml
