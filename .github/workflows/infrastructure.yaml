@@ -27,7 +27,7 @@ jobs:
 
       # Checkout the repository
       - name: Checkout
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v4.2.2
 
       # Setup Node LTS
       - name: Setup Node LTS ✨
